@@ -13,6 +13,7 @@ import os
 
 import subprocess
 import config
+import shutil
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -31,17 +32,32 @@ def notice(msg, title):
 
 
 def upload(path):
-    url = '/pic/%s.png' % time.time()
-    res  = upyun.putfile(path, url)
+    suffix = path.split('.')[-1]
+    if len(suffix) > 9:
+        suffix = ''
+    else:
+        suffix = '.' + suffix
 
-    url = config.domain + url
+    n = '%s%s' % (time.time(), suffix)
+    shutil.move(path, os.path.join(os.path.dirname(path), n))
 
-    if res.status_code == 200:
+    if path.startswith(config.private):
+        url = '/local/%s' % n
+        url = config.domain + url
         pbcopy(url)
-        print url
         notice("upload to: %s" % url, "HTTPPic")
     else:
-        notice("error %s" % res.status_code, "HTTPPic")
+        url = '/pic/%s' % n
+        res  = upyun.putfile(path, url)
+
+        url = config.domain + url
+
+        if res.status_code == 200:
+            pbcopy(url)
+            print url
+            notice("upload to: %s" % url, "HTTPPic")
+        else:
+            notice("error %s" % res.status_code, "HTTPPic")
 
 class MyEventHandler(FileSystemEventHandler):
     def on_created(self, event):
