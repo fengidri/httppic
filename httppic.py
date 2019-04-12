@@ -39,7 +39,9 @@ def upload(path):
         suffix = '.' + suffix
 
     n = '%s%s' % (time.time(), suffix)
-    shutil.move(path, os.path.join(os.path.dirname(path), n))
+    npath = os.path.join(os.path.dirname(path), n)
+    shutil.move(path, npath)
+    path = npath
 
     if path.startswith(config.private):
         url = '/local/%s' % n
